@@ -154,6 +154,39 @@
             color: var(--accent-purple);
         }
 
+        /* --- MODEL CARD TOOLTIP --- */
+        #model-card-tooltip {
+            position: fixed;
+            width: 280px;
+            background-color: #191a22c3;
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.8);
+						backdrop-filter: blur(12px);
+            z-index: 500;
+            pointer-events: none; /* Allows clicking through to the card */
+            opacity: 0;
+            transform: scale(0.95);
+            /* Note: We do NOT transition top/left here to avoid lag when following cursor */
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        #model-card-tooltip.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .caps-pill {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: var(--bg-element);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+        }
+
         /* TOAST STYLES */
         .toast {
             background: var(--bg-element);
@@ -185,6 +218,9 @@
 
     <!-- ================= GLOBAL TOOLTIP CONTAINER ================= -->
     <div id="tag-tooltip" onmouseenter="cancelTooltipHide()" onmouseleave="hideTooltipWithDelay()"></div>
+
+    <!-- ================= MODEL INFO TOOLTIP ================= -->
+    <div id="model-card-tooltip"></div>
 
     <!-- ================= LEFT SIDEBAR ================= -->
     <aside class="w-16 md:w-64 flex-shrink-0 border-r border-theme bg-theme-panel flex flex-col justify-between transition-colors" style="background-color: #0f0f12; border-color: var(--border-color);">
@@ -298,9 +334,6 @@
     <!-- ================= MODAL OVERLAY ================= -->
     <div id="modal-overlay" class="modal-overlay fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden opacity-0 transition-opacity duration-200">
         <div class="w-[75vw] max-w-[1150px] h-[85vh] rounded-xl border shadow-2xl flex flex-col overflow-hidden transform scale-95 transition-transform duration-200" id="modal-content" style="background-color: var(--bg-panel); border-color: var(--border-color);">
-            <!-- Modal Header Removed entirely as requested -->
-            
-            <!-- Container handles its own header now -->
             <div class="flex-1 flex flex-col overflow-hidden" id="modal-dashboard-container" style="background-color: var(--bg-app);"></div>
         </div>
     </div>
@@ -345,25 +378,29 @@
                 let image = getRandomImage(seed);
                 let author = AUTHORS[Math.floor(Math.random() * AUTHORS.length)];
                 let tags = getRandomTags();
+                let caps = getRandomCaps();
+                
+                // Description Generator
+                let description = `A high-fidelity ${category.toLowerCase()} model optimized for ${tags[0].toLowerCase()}. Features excellent coherence and style consistency for standard production workflows.`;
                 
                 if (category === 'Team') {
                     author = 'Galactic Studios';
-                    if (i === 0) { title = 'Big Catch: Fish'; image = 'https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?w=400&h=400&fit=crop'; }
-                    else if (i === 1) { title = 'Big Catch: Plants'; image = 'https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?w=400&h=400&fit=crop'; }
+                    if (i === 0) { title = 'Big Catch: Fish'; image = 'https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?w=400&h=400&fit=crop'; description = "Internal asset generator for the 'Big Catch' project. Specialized in aquatic life forms."; }
+                    else if (i === 1) { title = 'Big Catch: Plants'; image = 'https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?w=400&h=400&fit=crop'; description = "Vegetation generator for underwater biomes. Handles kelp, coral, and sea grass variations."; }
                 } else if (category === 'Base') {
                     author = 'Black Forest Labs';
                     image = 'https://i.ibb.co/23tV2VS3/2-Img.png';
-                    if (i === 0) { title = 'Stable Diffusion XL'; badges = ['NEW', 'POPULAR']; }
-                    else if (i === 1) { title = 'FLUX.1 [pro]'; }
-                    else if (i === 2) { title = 'Stable Diffusion 3'; }
-                    else if (i === 3) { title = 'FLUX.1 SRPO [dev]'; }
+                    if (i === 0) { title = 'Stable Diffusion XL'; badges = ['NEW', 'POPULAR']; description = "The latest iteration of SDXL. Unmatched photorealism and prompt adherence."; }
+                    else if (i === 1) { title = 'FLUX.1 [pro]'; description = "State-of-the-art image generation with superior detail and lighting composition."; }
+                    else if (i === 2) { title = 'Stable Diffusion 3'; description = "Next generation architecture utilizing MMDiT for better text handling."; }
+                    else if (i === 3) { title = 'FLUX.1 SRPO [dev]'; description = "Optimized for speed without sacrificing quality. Ideal for rapid iteration."; }
                 }
                 
                 return { 
                     id: `${category}-${i}`, title, author, daysAgo,
                     date: new Date(Date.now() - (daysAgo * 24 * 60 * 60 * 1000)),
                     isFavorite: Math.random() < 0.15, image, badges, category,
-                    tags: tags, capabilities: getRandomCaps()
+                    tags: tags, capabilities: caps, description
                 };
             });
         };
@@ -387,7 +424,7 @@
             setTimeout(() => { el.style.animation = 'toast-out 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards'; setTimeout(() => el.remove(), 300); }, 3000);
         }
 
-        // --- TOOLTIP LOGIC ---
+        // --- TAG TOOLTIP LOGIC ---
         let tooltipTimer = null;
         const tooltipEl = document.getElementById('tag-tooltip');
         window.showTagTooltip = (e, tagsString) => {
@@ -400,7 +437,7 @@
             tooltipEl.style.left = rect.left + 'px';
             tooltipEl.classList.add('show');
         };
-        window.hideTooltipWithDelay = () => { tooltipTimer = setTimeout(() => { tooltipEl.classList.remove('show'); }, 200); };
+        window.hideTooltipWithDelay = () => { tooltipTimer = setTimeout(() => { tooltipEl.classList.remove('show'); }, 800); };
         window.cancelTooltipHide = () => { clearTimeout(tooltipTimer); };
         window.applyTagFilter = (tag) => {
             if (!appState.filters.selectedTags.has(tag)) {
@@ -411,6 +448,95 @@
                 refreshGrid();
             }
             tooltipEl.classList.remove('show');
+        };
+
+// --- MODEL CARD TOOLTIP LOGIC ---
+        const cardTooltipEl = document.getElementById('model-card-tooltip');
+        let cardTooltipTimer = null; // Variable to hold the timer
+        const TOOLTIP_DELAY = 1500;   // Delay in milliseconds
+        
+        // Helper to calculate position relative to cursor with collision detection
+        const updateTooltipPos = (x, y) => {
+            const offset = 16; 
+            const width = cardTooltipEl.offsetWidth;
+            const height = cardTooltipEl.offsetHeight;
+            const winW = window.innerWidth;
+            const winH = window.innerHeight;
+            
+            let left = x + offset; 
+            let top = y + offset;
+            
+            // Collision Check: Right Edge
+            if (left + width > winW - 16) {
+                left = x - width - offset;
+            }
+            
+            // Collision Check: Bottom Edge
+            if (top + height > winH - 16) {
+                top = y - height - offset;
+            }
+            
+            cardTooltipEl.style.left = left + 'px';
+            cardTooltipEl.style.top = top + 'px';
+        };
+
+        window.showCardTooltip = (e, id) => {
+            // 1. Clear any pending timer from previous hovers
+            clearTimeout(cardTooltipTimer);
+
+            // 2. Prepare the data immediately (so we can track cursor position while waiting)
+            let item = null;
+            Object.values(rawData).forEach(section => {
+                const found = section.items.find(i => i.id === id);
+                if(found) item = found;
+            });
+            if(!item) return;
+
+            const capsHTML = item.capabilities.map(c => `<span class="caps-pill">${c}</span>`).join('');
+            
+            cardTooltipEl.innerHTML = `
+                <div class="flex items-start justify-between">
+                    <div>
+                        <div class="text-[14px] font-bold text-white">${item.title}</div>
+                        <div class="text-[11px] text-[var(--text-muted)] mt-0.5">by ${item.author}</div>
+                    </div>
+                    ${item.isFavorite ? '<i data-lucide="heart" class="w-4 h-4 text-[var(--accent-purple)] fill-current"></i>' : ''}
+                </div>
+                
+                <div class="text-[12px] text-[var(--text-body)] leading-relaxed border-t border-b border-[var(--border-color)] py-3">
+                    ${item.description}
+                </div>
+
+                <div>
+                    <div class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Capabilities</div>
+                    <div class="flex flex-wrap gap-1.5">
+                        ${capsHTML}
+                    </div>
+                </div>
+            `;
+            
+            lucide.createIcons();
+
+            // 3. Update position immediately (while invisible)
+            updateTooltipPos(e.clientX, e.clientY);
+
+            // 4. Start the delay timer
+            cardTooltipTimer = setTimeout(() => {
+                cardTooltipEl.classList.add('show');
+            }, TOOLTIP_DELAY);
+        };
+
+        window.moveCardTooltip = (e) => {
+            // Update position even if hidden, so when it appears it's at the correct spot
+            updateTooltipPos(e.clientX, e.clientY);
+        };
+
+        window.hideCardTooltip = () => {
+            // 1. Cancel the timer if the user leaves before the delay ends
+            clearTimeout(cardTooltipTimer);
+            
+            // 2. Hide the tooltip
+            cardTooltipEl.classList.remove('show');
         };
 
         function initApp() {
@@ -461,8 +587,16 @@
                     ${hiddenCount > 0 ? `<span onmouseenter="showTagTooltip(event, '${hiddenTagsJson}')" onmouseleave="hideTooltipWithDelay()" class="px-1.5 py-0.5 rounded text-[10px] font-medium text-[var(--text-body)] bg-white/10 border border-white/10 cursor-help hover:bg-white/20 transition-colors">+${hiddenCount}</span>` : ''}
                 </div>` : '';
 
+            // Added onmousemove to track cursor
             return `
-                <div onclick="selectModel('${item.id}')" class="fade-in group relative aspect-square w-full overflow-hidden rounded-xl border transition-all hover:shadow-[0_0_25px_rgba(99,102,241,0.25)] cursor-pointer select-none" style="background-color: var(--bg-card); border-color: var(--border-color);">
+                <div 
+                    onmouseenter="showCardTooltip(event, '${item.id}')" 
+                    onmousemove="moveCardTooltip(event)" 
+                    onmouseleave="hideCardTooltip()"
+                    onclick="selectModel('${item.id}')" 
+                    class="fade-in group relative aspect-square w-full overflow-hidden rounded-xl border transition-all hover:shadow-[0_0_25px_rgba(99,102,241,0.25)] cursor-pointer select-none" 
+                    style="background-color: var(--bg-card); border-color: var(--border-color);"
+                >
                     <div class="absolute inset-0 bg-checker opacity-30"></div>
                     <div class="absolute inset-0 flex items-center justify-center text-slate-700"><i data-lucide="${fallbackIcon}" class="w-16 h-16 opacity-50"></i></div>
                     ${item.isFavorite ? '<div class="absolute top-3 right-3 z-20 text-[var(--accent-purple)] drop-shadow-md"><svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>' : ''}
