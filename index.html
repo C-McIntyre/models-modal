@@ -38,6 +38,10 @@
             /* Accents */
             --accent-purple: #ae9dec;   
             
+            /* BRAND COLOR */
+            --brand-primary: #600FC2;
+            --brand-hover: #7a25db;
+            
             /* Active State */
             --active-bg: rgba(174, 157, 236, 0.15);
             --active-color: #ae9dec;
@@ -209,6 +213,15 @@
         @keyframes toast-out {
             to { opacity: 0; transform: translateY(-10px); }
         }
+
+        /* Tutorial Bounce Animation */
+        @keyframes bounce-x {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(5px); }
+        }
+        .animate-bounce-x {
+            animation: bounce-x 1s infinite;
+        }
     </style>
 </head>
 <body class="flex h-screen w-screen" onclick="closeAllDropdowns(event)">
@@ -228,7 +241,7 @@
             <div class="h-[var(--header-height)] flex items-center px-4 border-b border-theme cursor-pointer hover:bg-white/5 transition-colors" style="border-color: var(--border-color);">
                 <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center font-bold text-white text-xs mr-3">C</div>
                 <div class="hidden md:block overflow-hidden">
-                    <div class="text-xs font-bold text-white truncate">Connor's Workspace</div>
+                    <div class="text-xs font-bold text-white truncate">Your Workspace</div>
                     <div class="text-[10px] text-gray-500 flex items-center gap-1">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Online
                     </div>
@@ -278,24 +291,42 @@
                         <h2 class="font-bold text-white">2D Generator</h2>
                         <button class="text-xs text-[var(--accent-purple)] flex items-center gap-1"><i data-lucide="lightbulb" class="w-3 h-3"></i> Ideas</button>
                     </div>
-                    <div class="mb-4">
+                    <div class="mb-4 relative">
                         <label class="text-xs text-[var(--text-muted)] font-medium mb-1.5 block">Model</label>
-                        <button onclick="openModal()" class="w-full flex items-center gap-3 hover:bg-white/5 hover:ring-1 hover:ring-indigo-500 border rounded-lg p-2 transition-all text-left group" style="background-color: var(--bg-element); border-color: var(--border-color);">
-                            <div id="selected-model-icon" class="w-10 h-10 rounded bg-gradient-to-br from-indigo-900 to-slate-900 flex items-center justify-center text-white border border-slate-600 bg-cover bg-center overflow-hidden">
-                                <span class="text-xs font-bold">flux</span>
+                        <div class="relative">
+                            <!-- 
+                                UPDATED: 
+                                1. Added ID 'model-selector-btn' 
+                                2. Added red ring classes for outline: ring-2 ring-red-500 ring-offset-2 ring-offset-[#191a22]
+                            -->
+                            <button 
+                                id="model-selector-btn"
+                                onclick="handleTutorialClick()" 
+                                class="w-full flex items-center gap-3 hover:bg-white/5 hover:ring-1 hover:ring-indigo-500 border rounded-lg p-2 transition-all text-left group relative z-10 ring-2 ring-red-500 ring-offset-2 ring-offset-[#191a22]" 
+                                style="background-color: var(--bg-element); border-color: var(--border-color);">
+                                
+                                <div id="selected-model-icon" class="w-10 h-10 rounded bg-gradient-to-br from-indigo-900 to-slate-900 flex items-center justify-center text-white border border-slate-600 bg-cover bg-center overflow-hidden">
+                                    <span class="text-xs font-bold">flux</span>
+                                </div>
+                                <div class="flex-1 overflow-hidden">
+                                    <div id="selected-model-title" class="text-[13px] font-bold text-white group-hover:text-indigo-300 transition-colors truncate">FLUX.1 [dev]</div>
+                                    <div id="selected-model-author" class="text-[10px] text-[var(--text-muted)] truncate">Click to change model</div>
+                                </div>
+                                <i data-lucide="chevron-right" class="w-4 h-4 text-[var(--text-muted)] flex-shrink-0"></i>
+                            </button>
+                            
+                            <!-- UPDATED: Tutorial Pointer - Red Arrow -->
+                            <div id="tutorial-pointer" class="absolute left-[105%] top-1/2 -translate-y-1/2 flex items-center gap-2 z-20 animate-bounce-x pointer-events-none">
+                                <i data-lucide="arrow-left" class="w-6 h-6 text-red-500 font-bold fill-current"></i>
+                                <span class="text-red-500 font-bold text-xs whitespace-nowrap">Click to change model</span>
                             </div>
-                            <div class="flex-1 overflow-hidden">
-                                <div id="selected-model-title" class="text-[13px] font-bold text-white group-hover:text-indigo-300 transition-colors truncate">FLUX.1 [dev]</div>
-                                <div id="selected-model-author" class="text-[10px] text-[var(--text-muted)] truncate">Click to change model</div>
-                            </div>
-                            <i data-lucide="chevron-right" class="w-4 h-4 text-[var(--text-muted)] flex-shrink-0"></i>
-                        </button>
+                        </div>
                     </div>
                     <div class="mb-4">
                         <label class="text-xs text-[var(--text-muted)] font-medium mb-1.5 block">Prompt</label>
                         <textarea class="w-full border rounded-lg p-3 text-[13px] text-white h-32 focus:ring-1 focus:ring-indigo-500 focus:outline-none resize-none" style="background-color: var(--bg-app); border-color: var(--border-color);" placeholder="Describe your game asset..."></textarea>
                     </div>
-                     <button class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors text-[13px]">
+                     <button class="w-full text-white font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors text-[13px] hover:opacity-90" style="background-color: var(--brand-primary);">
                         <i data-lucide="sparkles" class="w-4 h-4"></i> Forge 2D
                     </button>
                 </div>
@@ -306,7 +337,7 @@
                         <div class="aspect-square rounded border" style="background-color: var(--bg-element); border-color: var(--border-color);"></div>
                     </div>
                     <div class="absolute text-center">
-                         <p class="text-[var(--text-muted)]">Select the model from the sidebar to open the Model Selector.</p>
+                         <p class="text-[var(--text-muted)]">Select a model from the sidebar to open the Model Selector.</p>
                     </div>
                 </div>
             </div>
@@ -348,6 +379,7 @@
         <div onclick="setDateFilter(30)" class="dropdown-item">Last 30 Days</div>
     </div>
     <div id="dropdown-sort" class="dropdown-menu">
+        <div onclick="setSort('popular')" class="dropdown-item">Most Popular</div>
         <div onclick="setSort('recent')" class="dropdown-item">Recently Used</div>
         <div onclick="setSort('oldest')" class="dropdown-item">Oldest First</div>
         <div onclick="setSort('az')" class="dropdown-item">Name (A-Z)</div>
@@ -379,25 +411,27 @@
                 let author = AUTHORS[Math.floor(Math.random() * AUTHORS.length)];
                 let tags = getRandomTags();
                 let caps = getRandomCaps();
+                // Simulating usage count for popularity sorting
+                let usageCount = Math.floor(Math.random() * 10000); 
                 
                 // Description Generator
                 let description = `A high-fidelity ${category.toLowerCase()} model optimized for ${tags[0].toLowerCase()}. Features excellent coherence and style consistency for standard production workflows.`;
                 
                 if (category === 'Team') {
                     author = 'Galactic Studios';
-                    if (i === 0) { title = 'Big Catch: Fish'; image = 'https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?w=400&h=400&fit=crop'; description = "Internal asset generator for the 'Big Catch' project. Specialized in aquatic life forms."; }
+                    if (i === 0) { title = 'Big Catch: Fish'; image = 'https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?w=400&h=400&fit=crop'; description = "Internal asset generator for the 'Big Catch' project. Specialized in aquatic life forms."; usageCount = 9500; }
                     else if (i === 1) { title = 'Big Catch: Plants'; image = 'https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?w=400&h=400&fit=crop'; description = "Vegetation generator for underwater biomes. Handles kelp, coral, and sea grass variations."; }
                 } else if (category === 'Base') {
                     author = 'Black Forest Labs';
                     image = 'https://i.ibb.co/23tV2VS3/2-Img.png';
-                    if (i === 0) { title = 'Stable Diffusion XL'; badges = ['NEW', 'POPULAR']; description = "The latest iteration of SDXL. Unmatched photorealism and prompt adherence."; }
-                    else if (i === 1) { title = 'FLUX.1 [pro]'; description = "State-of-the-art image generation with superior detail and lighting composition."; }
+                    if (i === 0) { title = 'Stable Diffusion XL'; badges = ['NEW', 'POPULAR']; description = "The latest iteration of SDXL. Unmatched photorealism and prompt adherence."; usageCount = 12000; }
+                    else if (i === 1) { title = 'FLUX.1 [pro]'; description = "State-of-the-art image generation with superior detail and lighting composition."; usageCount = 11000; }
                     else if (i === 2) { title = 'Stable Diffusion 3'; description = "Next generation architecture utilizing MMDiT for better text handling."; }
                     else if (i === 3) { title = 'FLUX.1 SRPO [dev]'; description = "Optimized for speed without sacrificing quality. Ideal for rapid iteration."; }
                 }
                 
                 return { 
-                    id: `${category}-${i}`, title, author, daysAgo,
+                    id: `${category}-${i}`, title, author, daysAgo, usageCount,
                     date: new Date(Date.now() - (daysAgo * 24 * 60 * 60 * 1000)),
                     isFavorite: Math.random() < 0.15, image, badges, category,
                     tags: tags, capabilities: caps, description
@@ -565,6 +599,7 @@
             if (appState.filters.selectedAuthors.size > 0) result = result.filter(i => appState.filters.selectedAuthors.has(i.author));
             if (appState.filters.dateRangeDays !== 'all') { const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - appState.filters.dateRangeDays); result = result.filter(i => i.date >= cutoff); }
             result.sort((a, b) => {
+                if (appState.sort === 'popular') return b.usageCount - a.usageCount;
                 if (appState.sort === 'recent') return a.daysAgo - b.daysAgo;
                 if (appState.sort === 'oldest') return b.daysAgo - a.daysAgo;
                 if (appState.sort === 'az') return a.title.localeCompare(b.title);
@@ -751,7 +786,20 @@
             refreshGrid(); 
         };
         
-        window.setSort = (type) => { appState.sort = type; const labels = document.querySelectorAll('.sort-btn-label'); const map = { 'recent': 'Recently Used', 'oldest': 'Oldest First', 'az': 'Name (A-Z)', 'za': 'Name (Z-A)' }; labels.forEach(l => l.innerText = map[type]); refreshGrid(); };
+        window.setSort = (type) => { 
+            appState.sort = type; 
+            const labels = document.querySelectorAll('.sort-btn-label'); 
+            const map = { 
+                'recent': 'Recently Used', 
+                'oldest': 'Oldest First', 
+                'az': 'Name (A-Z)', 
+                'za': 'Name (Z-A)',
+                'popular': 'Most Popular'
+            }; 
+            labels.forEach(l => l.innerText = map[type]); 
+            refreshGrid(); 
+        };
+
         window.toggleSection = (key, cid) => { appState.expandedSections[key] = !appState.expandedSections[key]; renderGrid(cid); };
         
         // SELECTION LOGIC
@@ -792,6 +840,23 @@
         function closeModal() { const overlay = document.getElementById('modal-overlay'); const content = document.getElementById('modal-content'); overlay.classList.add('opacity-0'); content.classList.remove('scale-100'); content.classList.add('scale-95'); setTimeout(() => overlay.classList.add('hidden'), 200); }
         window.toggleDropdown = (e, id) => { e.stopPropagation(); const btn = e.currentTarget; const dropdown = document.getElementById(id); const isVisible = dropdown.classList.contains('show'); document.querySelectorAll('.dropdown-menu').forEach(d => d.classList.remove('show')); if(!isVisible) { const rect = btn.getBoundingClientRect(); dropdown.style.top = (rect.bottom + 8) + 'px'; dropdown.style.left = rect.left + 'px'; if(id === 'dropdown-sort') { dropdown.style.display = 'block'; const dw = dropdown.offsetWidth; dropdown.style.display = ''; dropdown.style.left = (rect.right - dw) + 'px'; } dropdown.classList.add('show'); } };
         window.closeAllDropdowns = (e) => { if (e.target.closest('.dropdown-menu') || e.target.closest('button[onclick^="toggleDropdown"]')) return; document.querySelectorAll('.dropdown-menu').forEach(d => d.classList.remove('show')); };
+        
+        // Tutorial Logic
+        window.handleTutorialClick = () => {
+            // Remove pointer
+            const ptr = document.getElementById('tutorial-pointer');
+            if(ptr) ptr.remove();
+
+            // Remove outline
+            const btn = document.getElementById('model-selector-btn');
+            if(btn) {
+                // Remove red ring classes
+                btn.classList.remove('ring-2', 'ring-red-500', 'ring-offset-2', 'ring-offset-[#191a22]');
+            }
+
+            openModal();
+        };
+        
         initApp();
     </script>
 </body>
